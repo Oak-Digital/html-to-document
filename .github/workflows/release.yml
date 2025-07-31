@@ -1,5 +1,6 @@
 name: Release & Publish (monorepo)
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*.*.*' # e.g. v0.2.0
