@@ -47,6 +47,7 @@ jobs:
         if: steps.versions.outputs.tag == steps.versions.outputs.docx
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: packages/adapters/docx
         run: bun publish --access public
 
