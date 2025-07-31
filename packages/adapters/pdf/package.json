@@ -36,10 +36,10 @@
     "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx,json,css,md}'"
   },
   "peerDependencies": {
-    "html-to-document-core": "^0.3.0"
+    "html-to-document-core": "workspace:^"
   },
   "dependencies": {
-    "html-to-document-adapter-docx": "^0.3.0",
+    "html-to-document-adapter-docx": "workspace:^",
     "html2pdf.js": "^0.10.2",
     "libreoffice-convert": "^1.6.1",
     "mammoth": "^1.6.0",

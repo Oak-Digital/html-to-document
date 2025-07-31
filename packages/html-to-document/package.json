@@ -42,13 +42,13 @@
   ],
   "scripts": {
     "copy-docs": "cp ../../README.md README.md && cp ../../CHANGELOG.md CHANGELOG.md",
-    "prepack": "npm run copy-docs && npm run build",
+    "prepack": "bun run copy-docs && bun run build",
     "build": "tsc -p tsconfig.json",
     "test": "echo \"no tests\""
   },
   "dependencies": {
-    "html-to-document-core": "^0.3.0",
-    "html-to-document-adapter-docx": "^0.3.0"
+    "html-to-document-core": "workspace:*",
+    "html-to-document-adapter-docx": "workspace:*"
   },
   "engines": {
     "node": ">=14"

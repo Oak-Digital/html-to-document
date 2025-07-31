@@ -2,13 +2,14 @@
   "name": "html-to-document-root",
   "private": true,
   "workspaces": [
+    "demo",
     "packages/core",
     "packages/adapters/*",
     "packages/deconverters/*",
     "packages/html-to-document"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "bun run '--filter=*' build ",
     "clean": "rimraf dist node_modules packages/**/dist packages/**/node_modules demo/**/dist demo/**/node_modules package-lock.json yarn.lock",
     "test": "jest --runInBand",
     "prepare": "husky",
@@ -58,7 +59,11 @@
     "jszip": "^3.10.1",
     "lint-staged": "^16.1.2",
     "rimraf": "^5.0.5",
-    "ts-jest": "^29.3.4"
+    "ts-jest": "^29.3.4",
+    "@types/bun": "latest"
   },
-  "version": "0.0.2"
+  "version": "0.0.2",
+  "peerDependencies": {
+    "typescript": "^5"
+  }
 }
