@@ -47,7 +47,8 @@ jobs:
         if: steps.versions.outputs.tag == steps.versions.outputs.docx
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: bun publish --workspace packages/adapters/docx --access public --provenance
+        working-directory: packages/adapters/docx
+        run: bun publish --access public
 
       # Publish default PDF adapter
       # - name: Publish html-to-document-adapter-pdf
