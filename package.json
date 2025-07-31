@@ -64,7 +64,7 @@
     "bumpp": "^10.2.1",
     "@types/bun": "latest"
   },
-  "version": "0.3.1-manual.1",
+  "version": "0.3.1-manual.2",
   "peerDependencies": {
     "typescript": "^5"
   }
