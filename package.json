@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
+    "release": "bumpp",
     "clean": "rimraf dist node_modules packages/**/dist packages/**/node_modules demo/**/dist demo/**/node_modules package-lock.json yarn.lock",
     "test": "jest --runInBand",
     "prepare": "husky",
@@ -60,5 +61,8 @@
     "rimraf": "^5.0.5",
     "ts-jest": "^29.3.4"
   },
-  "version": "0.0.2"
+  "version": "0.0.2",
+  "dependencies": {
+    "bumpp": "^10.2.1"
+  }
 }
