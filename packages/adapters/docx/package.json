@@ -1,5 +1,5 @@
 {
-  "name": "html-to-document-adapter-docx",
+  "name": "@oak-digital/html-to-document-adapter-docx",
   "version": "0.3.0",
   "description": "DOCX adapter for html-to-document-core — converts a DocumentElement tree into a .docx Buffer using the docx library.",
   "keywords": [
