@@ -17,18 +17,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org/'
-          cache: 'npm'
+      - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies (all workspaces)
-        run: npm install
+        run: bun install
 
       - name: Build all workspaces
-        run: npm run build
+        run: bun run build
 
       - name: Extract tag and package versions
         id: versions
@@ -45,32 +40,32 @@ jobs:
       #   if: steps.versions.outputs.tag == steps.versions.outputs.core
       #   env:
       #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #   run: npm publish --workspace packages/core --access public --provenance
+      #   run: bun publish --workspace packages/core --access public --provenance
 
       # Publish default DOCX adapter
       - name: Publish html-to-document-adapter-docx
         if: steps.versions.outputs.tag == steps.versions.outputs.docx
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --workspace packages/adapters/docx --access public --provenance
+        run: bun publish --workspace packages/adapters/docx --access public --provenance
 
       # Publish default PDF adapter
       # - name: Publish html-to-document-adapter-pdf
       #   if: steps.versions.outputs.tag == steps.versions.outputs.pdf
       #   env:
       #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #   run: npm publish --workspace packages/adapters/pdf --access public --provenance
+      #   run: bun publish --workspace packages/adapters/pdf --access public --provenance
 
       # Publish PDF deconverter
       # - name: Publish html-to-document-deconverter-pdf
       #   if: steps.versions.outputs.tag == steps.versions.outputs.pdfdeconv
       #   env:
       #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #   run: npm publish --workspace packages/deconverters/pdf --access public --provenance
+      #   run: bun publish --workspace packages/deconverters/pdf --access public --provenance
 
       # Publish wrapper last
       # - name: Publish html-to-document (wrapper)
       #   if: steps.versions.outputs.tag == steps.versions.outputs.wrapper
       #   env:
       #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #   run: npm publish --workspace packages/html-to-document --access public --provenance
+      #   run: bun publish --workspace packages/html-to-document --access public --provenance
