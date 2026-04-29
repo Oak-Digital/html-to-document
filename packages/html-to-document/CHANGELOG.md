@@ -1,5 +1,19 @@
 # html-to-document
 
+## 0.5.0
+
+### Minor Changes
+
+- [#69](https://github.com/ChipiKaf/html-to-document/pull/69) [`a9837bc`](https://github.com/ChipiKaf/html-to-document/commit/a9837bcf5a6b9360927f5c3f9b0cfd693c768331) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Moved current style mapper to docx converter
+
+### Patch Changes
+
+- [`61d7ca4`](https://github.com/ChipiKaf/html-to-document/commit/61d7ca433297988e0b9796cf5b709030226dac5b) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Added resolve image functionality
+
+- Updated dependencies [[`61d7ca4`](https://github.com/ChipiKaf/html-to-document/commit/61d7ca433297988e0b9796cf5b709030226dac5b), [`1de72cd`](https://github.com/ChipiKaf/html-to-document/commit/1de72cd9bb3f287865d0e796719fccb15fdff0ad), [`38da5bc`](https://github.com/ChipiKaf/html-to-document/commit/38da5bca09e9a4e2f3fd26a72f815153cd4922b2), [`a10ac85`](https://github.com/ChipiKaf/html-to-document/commit/a10ac85f27362ceacd586f31bd715d51e91fadaf), [`a9837bc`](https://github.com/ChipiKaf/html-to-document/commit/a9837bcf5a6b9360927f5c3f9b0cfd693c768331), [`aca29a7`](https://github.com/ChipiKaf/html-to-document/commit/aca29a7cde255aedc917dc796965753536b36100), [`1de72cd`](https://github.com/ChipiKaf/html-to-document/commit/1de72cd9bb3f287865d0e796719fccb15fdff0ad), [`8fda6b9`](https://github.com/ChipiKaf/html-to-document/commit/8fda6b9eb9c5d651008d3fc27d972f1975b9b49b), [`1f10387`](https://github.com/ChipiKaf/html-to-document/commit/1f1038705e4bba8caa3ab9293063d4f869a7526f), [`61d7ca4`](https://github.com/ChipiKaf/html-to-document/commit/61d7ca433297988e0b9796cf5b709030226dac5b), [`61d7ca4`](https://github.com/ChipiKaf/html-to-document/commit/61d7ca433297988e0b9796cf5b709030226dac5b), [`2c249e0`](https://github.com/ChipiKaf/html-to-document/commit/2c249e042f3ba5d8f0d47d0646be3f31ffe43853), [`92474d8`](https://github.com/ChipiKaf/html-to-document/commit/92474d8fdab99efaff9cbfae6e9705d62e345dc8), [`3071bba`](https://github.com/ChipiKaf/html-to-document/commit/3071bba5489444d41ace2c6e802db1f174e937d7)]:
+  - html-to-document-adapter-docx@0.6.0
+  - html-to-document-core@0.5.0
+
 ## 0.4.4
 
 ### Patch Changes

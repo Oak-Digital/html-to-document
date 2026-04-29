@@ -1,5 +1,38 @@
 ## <small>0.3.0 (2025-06-08)</small>
 
+## 0.6.0
+
+### Minor Changes
+
+- [`61d7ca4`](https://github.com/ChipiKaf/html-to-document/commit/61d7ca433297988e0b9796cf5b709030226dac5b) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Added inline converter for images
+
+- [#67](https://github.com/ChipiKaf/html-to-document/pull/67) [`1de72cd`](https://github.com/ChipiKaf/html-to-document/commit/1de72cd9bb3f287865d0e796719fccb15fdff0ad) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Handle more units when converting to docx
+
+- [#59](https://github.com/ChipiKaf/html-to-document/pull/59) [`38da5bc`](https://github.com/ChipiKaf/html-to-document/commit/38da5bca09e9a4e2f3fd26a72f815153cd4922b2) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Added split text node by newlines utility and docx text converter will split them by default
+
+- [#69](https://github.com/ChipiKaf/html-to-document/pull/69) [`a9837bc`](https://github.com/ChipiKaf/html-to-document/commit/a9837bcf5a6b9360927f5c3f9b0cfd693c768331) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Moved current style mapper to docx converter
+
+- [#76](https://github.com/ChipiKaf/html-to-document/pull/76) [`1f10387`](https://github.com/ChipiKaf/html-to-document/commit/1f1038705e4bba8caa3ab9293063d4f869a7526f) Thanks [@Alexnortung](https://github.com/Alexnortung)! - BREAKING: Added stylesheet class for customizing styles in a more flexible way
+
+- [`61d7ca4`](https://github.com/ChipiKaf/html-to-document/commit/61d7ca433297988e0b9796cf5b709030226dac5b) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Breaking: Fix typo in element convert interface (convertEement -> convertElement)
+
+- [#61](https://github.com/ChipiKaf/html-to-document/pull/61) [`3071bba`](https://github.com/ChipiKaf/html-to-document/commit/3071bba5489444d41ace2c6e802db1f174e937d7) Thanks [@Alexnortung](https://github.com/Alexnortung)! - DOCX: Default section options config
+
+### Patch Changes
+
+- [`a10ac85`](https://github.com/ChipiKaf/html-to-document/commit/a10ac85f27362ceacd586f31bd715d51e91fadaf) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Fix table row not getting the correct style mapping and vertical align top
+
+- [#67](https://github.com/ChipiKaf/html-to-document/pull/67) [`1de72cd`](https://github.com/ChipiKaf/html-to-document/commit/1de72cd9bb3f287865d0e796719fccb15fdff0ad) Thanks [@Alexnortung](https://github.com/Alexnortung)! - fix pixels to twips conversion
+
+- [#60](https://github.com/ChipiKaf/html-to-document/pull/60) [`8fda6b9`](https://github.com/ChipiKaf/html-to-document/commit/8fda6b9eb9c5d651008d3fc27d972f1975b9b49b) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Will now merge numbering config, so unordered or ordered default config is not lost
+
+- [#62](https://github.com/ChipiKaf/html-to-document/pull/62) [`2c249e0`](https://github.com/ChipiKaf/html-to-document/commit/2c249e042f3ba5d8f0d47d0646be3f31ffe43853) Thanks [@Alexnortung](https://github.com/Alexnortung)! - DOCX: fix: empty tables will not break the converted output
+
+- [#54](https://github.com/ChipiKaf/html-to-document/pull/54) [`92474d8`](https://github.com/ChipiKaf/html-to-document/commit/92474d8fdab99efaff9cbfae6e9705d62e345dc8) Thanks [@Alexnortung](https://github.com/Alexnortung)! - Added webpackIgnore: true for node.js imports
+
+- Updated dependencies [[`1de72cd`](https://github.com/ChipiKaf/html-to-document/commit/1de72cd9bb3f287865d0e796719fccb15fdff0ad), [`38da5bc`](https://github.com/ChipiKaf/html-to-document/commit/38da5bca09e9a4e2f3fd26a72f815153cd4922b2), [`a10ac85`](https://github.com/ChipiKaf/html-to-document/commit/a10ac85f27362ceacd586f31bd715d51e91fadaf), [`a9837bc`](https://github.com/ChipiKaf/html-to-document/commit/a9837bcf5a6b9360927f5c3f9b0cfd693c768331), [`aca29a7`](https://github.com/ChipiKaf/html-to-document/commit/aca29a7cde255aedc917dc796965753536b36100), [`1f10387`](https://github.com/ChipiKaf/html-to-document/commit/1f1038705e4bba8caa3ab9293063d4f869a7526f), [`61d7ca4`](https://github.com/ChipiKaf/html-to-document/commit/61d7ca433297988e0b9796cf5b709030226dac5b)]:
+  - html-to-document-core@0.5.0
+
 ## 0.5.0
 
 ### Minor Changes
