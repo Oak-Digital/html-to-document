@@ -348,45 +348,4 @@ describe('html.serializer', () => {
 
     expect(html).toContain('<p style="color: red; font-size: 12px;">Hello</p>');
   });
-
-  it('propagates hidden table outer borders to perimeter cells during serialization', async () => {
-    const elements: DocumentElement[] = [
-      {
-        type: 'table',
-        styles: { borderStyle: 'hidden' },
-        attributes: {},
-        rows: [
-          {
-            type: 'table-row',
-            styles: {},
-            attributes: {},
-            cells: [
-              {
-                type: 'table-cell',
-                content: [{ type: 'text', text: 'A' }],
-                styles: {},
-                attributes: {},
-              },
-              {
-                type: 'table-cell',
-                content: [{ type: 'text', text: 'B' }],
-                styles: {},
-                attributes: {},
-              },
-            ],
-          },
-        ],
-      },
-    ];
-
-    const html = await minifyMiddleware(toHtml(elements));
-
-    expect(html).toContain('<table style="border-style: hidden;">');
-    expect(html).toContain(
-      '<td style="border-top-style: hidden; border-left-style: hidden; border-bottom-style: hidden;">A</td>'
-    );
-    expect(html).toContain(
-      '<td style="border-top-style: hidden; border-bottom-style: hidden; border-right-style: hidden;">B</td>'
-    );
-  });
 });

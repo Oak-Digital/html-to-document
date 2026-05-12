@@ -21,158 +21,22 @@ import type { ElementConverterDependencies, IBlockConverter } from '../types';
 
 type DocumentElementType = TableElement;
 
-const DOCX_DEFAULT_BORDER = {
-  style: BorderStyle.SINGLE,
-  size: 4,
-  color: 'auto',
-};
-
-const DOCX_NONE_BORDER = {
-  style: BorderStyle.NONE,
-  size: 0,
-  color: 'auto',
-};
-
-const ensureZeroSizeForNoneBorders = (
-  mappedStyles: Record<string, unknown>
-): Record<string, unknown> => {
-  const normalizedStyles = { ...mappedStyles };
-
-  for (const key of ['borders', 'border'] as const) {
-    const borderGroup = normalizedStyles[key];
-    if (
-      !borderGroup ||
-      typeof borderGroup !== 'object' ||
-      Array.isArray(borderGroup)
-    ) {
-      continue;
-    }
-
-    const nextBorderGroup = { ...(borderGroup as Record<string, unknown>) };
-    let changed = false;
-
-    for (const [direction, borderValue] of Object.entries(nextBorderGroup)) {
-      if (
-        !borderValue ||
-        typeof borderValue !== 'object' ||
-        Array.isArray(borderValue)
-      ) {
-        continue;
-      }
-
-      const side = borderValue as Record<string, unknown>;
-      if (side.style === BorderStyle.NONE && side.size !== 0) {
-        nextBorderGroup[direction] = {
-          ...side,
-          size: 0,
-        };
-        changed = true;
-      }
-    }
-
-    if (changed) {
-      normalizedStyles[key] = nextBorderGroup;
-    }
-  }
-
-  return normalizedStyles;
-};
-
-const hasNoneBorderStyle = (mappedStyles: Record<string, unknown>): boolean => {
-  for (const key of ['borders', 'border'] as const) {
-    const borderGroup = mappedStyles[key];
-    if (
-      !borderGroup ||
-      typeof borderGroup !== 'object' ||
-      Array.isArray(borderGroup)
-    ) {
-      continue;
-    }
-
-    for (const borderValue of Object.values(
-      borderGroup as Record<string, unknown>
-    )) {
-      if (
-        borderValue &&
-        typeof borderValue === 'object' &&
-        !Array.isArray(borderValue) &&
-        (borderValue as Record<string, unknown>).style === BorderStyle.NONE
-      ) {
-        return true;
-      }
-    }
-  }
-
+/**
+ * Returns true if the given CSS styles declare `hidden` on the specified border side.
+ * Per CSS, `border-style: hidden` has the highest priority in border conflict resolution
+ * and suppresses adjacent visible borders in a collapsed-border table.
+ */
+const isBorderSideHidden = (
+  styles: Styles,
+  side: 'Top' | 'Right' | 'Bottom' | 'Left'
+): boolean => {
+  const sideVal = styles[`border${side}Style` as keyof Styles];
+  if (sideVal !== undefined) return sideVal === 'hidden';
+  const globalVal = styles.borderStyle;
+  if (globalVal !== undefined) return globalVal === 'hidden';
+  const border = styles.border;
+  if (border !== undefined) return /\bhidden\b/.test(String(border));
   return false;
-};
-
-const ensureHiddenTableBorders = (
-  mappedStyles: Record<string, unknown>
-): Record<string, unknown> => {
-  const normalizedStyles = ensureZeroSizeForNoneBorders(mappedStyles);
-
-  return {
-    ...normalizedStyles,
-    borders: {
-      top: { ...DOCX_NONE_BORDER },
-      bottom: { ...DOCX_NONE_BORDER },
-      left: { ...DOCX_NONE_BORDER },
-      right: { ...DOCX_NONE_BORDER },
-      insideHorizontal: { ...DOCX_NONE_BORDER },
-      insideVertical: { ...DOCX_NONE_BORDER },
-    },
-  };
-};
-
-const getBorderGroup = (
-  mappedStyles: Record<string, unknown>,
-  key: 'border' | 'borders'
-): Record<string, unknown> | undefined => {
-  const value = mappedStyles[key];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return undefined;
-  }
-
-  return value as Record<string, unknown>;
-};
-
-const getBorderSide = (
-  mappedStyles: Record<string, unknown>,
-  direction: 'top' | 'right' | 'bottom' | 'left'
-): Record<string, unknown> | undefined => {
-  const borderGroup = getBorderGroup(mappedStyles, 'border');
-  if (borderGroup?.[direction] && typeof borderGroup[direction] === 'object') {
-    return borderGroup[direction] as Record<string, unknown>;
-  }
-
-  const bordersGroup = getBorderGroup(mappedStyles, 'borders');
-  if (
-    bordersGroup?.[direction] &&
-    typeof bordersGroup[direction] === 'object'
-  ) {
-    return bordersGroup[direction] as Record<string, unknown>;
-  }
-
-  return undefined;
-};
-
-const isNoneBorderSide = (
-  mappedStyles: Record<string, unknown>,
-  direction: 'top' | 'right' | 'bottom' | 'left'
-): boolean =>
-  getBorderSide(mappedStyles, direction)?.style === BorderStyle.NONE;
-
-const withExplicitCellBorders = (
-  mappedStyles: Record<string, unknown>,
-  border: Record<'top' | 'right' | 'bottom' | 'left', Record<string, unknown>>
-): Record<string, unknown> => {
-  const normalizedStyles = ensureZeroSizeForNoneBorders(mappedStyles);
-
-  return {
-    ...normalizedStyles,
-    border,
-    borders: border,
-  };
 };
 
 export class TableConverter implements IBlockConverter<DocumentElementType> {
@@ -194,7 +58,6 @@ export class TableConverter implements IBlockConverter<DocumentElementType> {
       ...defaultStyles?.[element.type],
       ...stylesheet.getComputedStyles(element, cascadedStyles),
     };
-
     const cascadingStyles = cascadeStyles(
       mergedStyles,
       element.scope,
@@ -208,14 +71,12 @@ export class TableConverter implements IBlockConverter<DocumentElementType> {
       stylesCol =
         (colgroupMeta?.metadata as { col: DocumentElement[] })?.col.map(
           (col) => {
-            return ensureZeroSizeForNoneBorders(
-              styleMapper.mapStyles(
-                {
-                  ...defaultStyles?.[col.type],
-                  ...stylesheet.getComputedStyles(col, cascadingStyles),
-                },
-                col
-              )
+            return styleMapper.mapStyles(
+              {
+                ...defaultStyles?.[col.type],
+                ...stylesheet.getComputedStyles(col, cascadingStyles),
+              },
+              col
             );
           }
         ) ?? [];
@@ -314,57 +175,28 @@ export class TableConverter implements IBlockConverter<DocumentElementType> {
         }
       }
     }
-    // Build the TableRows objects
-    const tableRows: TableRow[] = [];
-    const mappedTableStyles = ensureZeroSizeForNoneBorders(
-      styleMapper.mapStyles({ ...mergedStyles, ...element.styles }, element)
-    );
-    const hiddenTableTop = isNoneBorderSide(mappedTableStyles, 'top');
-    const hiddenTableRight = isNoneBorderSide(mappedTableStyles, 'right');
-    const hiddenTableBottom = isNoneBorderSide(mappedTableStyles, 'bottom');
-    const hiddenTableLeft = isNoneBorderSide(mappedTableStyles, 'left');
-    const cellStyleCache = new Map<DocumentElement, Record<string, unknown>>();
-    const getMappedCellStyles = (
-      cell: DocumentElement
-    ): Record<string, unknown> => {
-      const cached = cellStyleCache.get(cell);
-      if (cached) {
-        return cached;
-      }
 
-      const mappedCellStyles = ensureZeroSizeForNoneBorders(
-        styleMapper.mapStyles(
-          {
-            ...stylesheet.getMatchedStyles(cell),
-            ...defaultStyles?.[cell.type],
-            ...cell.styles,
-          },
-          cell
-        )
-      );
-
-      cellStyleCache.set(cell, mappedCellStyles);
-      return mappedCellStyles;
-    };
-
-    const hasAnyHiddenCellBorders = element.rows.some((row) => {
-      return row.cells.some((cell) =>
-        hasNoneBorderStyle(getMappedCellStyles(cell))
-      );
+    console.debug('[table-border] table raw styles:', {
+      ...mergedStyles,
+      ...element.styles,
     });
 
-    const getNeighborMappedStyles = (
-      rowIndex: number,
-      columnIndex: number
-    ): Record<string, unknown> | undefined => {
-      const neighbor = grid[rowIndex]?.[columnIndex];
-      if (!neighbor?.cell) {
-        return undefined;
-      }
-
-      return getMappedCellStyles(neighbor.cell);
+    // Helper to get the merged raw CSS styles for any grid cell (used for adjacent hidden resolution)
+    const getGridCellRawStyles = (
+      gridCell: (typeof grid)[0][0] | undefined
+    ): Styles | null => {
+      if (!gridCell?.cell) return null;
+      return {
+        ...(defaultStyles?.[gridCell.cell.type] ?? {}),
+        ...stylesheet.getMatchedStyles(gridCell.cell),
+        ...gridCell.cell.styles,
+      } as Styles;
     };
 
+    const NONE_BORDER = { style: BorderStyle.NONE, size: 0, color: 'auto' };
+
+    // Build the TableRows objects
+    const tableRows: TableRow[] = [];
     for (let i = 0; i < numRows; i++) {
       const cells: TableCell[] = [];
       let j = 0;
@@ -409,6 +241,7 @@ export class TableConverter implements IBlockConverter<DocumentElementType> {
                 ...stylesheet.getMatchedStyles(originalCell),
               }
             : {};
+
           const cellContent = originalCell
             ? converter.convertToBlocks({
                 element: originalCell,
@@ -440,109 +273,63 @@ export class TableConverter implements IBlockConverter<DocumentElementType> {
                 },
               })
             : [new Paragraph('')];
+          const docxCellStyles = styleMapper.mapStyles(
+            {
+              ...(originalCell
+                ? {
+                    ...stylesheet?.getMatchedStyles(originalCell),
+                    ...defaultStyles?.[originalCell.type],
+                  }
+                : {}),
+              ...originalCell?.styles,
+            },
+            originalCell!
+          ) as Record<string, unknown>;
 
-          let mappedCellStyles = originalCell
-            ? getMappedCellStyles(originalCell)
-            : {};
-
-          if (hasAnyHiddenCellBorders && originalCell) {
-            const topNeighborHidden = Array.from({ length: colSpan }).some(
-              (_, offset) => {
-                const neighborStyles = getNeighborMappedStyles(
-                  i - 1,
-                  j + offset
-                );
-                return neighborStyles
-                  ? isNoneBorderSide(neighborStyles, 'bottom')
-                  : false;
-              }
-            );
-            const rightNeighborHidden = Array.from({ length: rowSpan }).some(
-              (_, offset) => {
-                const neighborStyles = getNeighborMappedStyles(
-                  i + offset,
-                  j + colSpan
-                );
-                return neighborStyles
-                  ? isNoneBorderSide(neighborStyles, 'left')
-                  : false;
-              }
-            );
-            const bottomNeighborHidden = Array.from({ length: colSpan }).some(
-              (_, offset) => {
-                const neighborStyles = getNeighborMappedStyles(
-                  i + rowSpan,
-                  j + offset
-                );
-                return neighborStyles
-                  ? isNoneBorderSide(neighborStyles, 'top')
-                  : false;
-              }
-            );
-            const leftNeighborHidden = Array.from({ length: rowSpan }).some(
-              (_, offset) => {
-                const neighborStyles = getNeighborMappedStyles(
-                  i + offset,
-                  j - 1
-                );
-                return neighborStyles
-                  ? isNoneBorderSide(neighborStyles, 'right')
-                  : false;
-              }
-            );
-
-            mappedCellStyles = withExplicitCellBorders(mappedCellStyles, {
-              top:
-                isNoneBorderSide(mappedCellStyles, 'top') ||
-                topNeighborHidden ||
-                (i === 0 && hiddenTableTop)
-                  ? { ...DOCX_NONE_BORDER }
-                  : {
-                      ...(getBorderSide(mappedCellStyles, 'top') ??
-                        DOCX_DEFAULT_BORDER),
-                    },
-              right:
-                isNoneBorderSide(mappedCellStyles, 'right') ||
-                rightNeighborHidden ||
-                (j + colSpan >= effectiveNumCols && hiddenTableRight)
-                  ? { ...DOCX_NONE_BORDER }
-                  : {
-                      ...(getBorderSide(mappedCellStyles, 'right') ??
-                        DOCX_DEFAULT_BORDER),
-                    },
-              bottom:
-                isNoneBorderSide(mappedCellStyles, 'bottom') ||
-                bottomNeighborHidden ||
-                (i + rowSpan >= numRows && hiddenTableBottom)
-                  ? { ...DOCX_NONE_BORDER }
-                  : {
-                      ...(getBorderSide(mappedCellStyles, 'bottom') ??
-                        DOCX_DEFAULT_BORDER),
-                    },
-              left:
-                isNoneBorderSide(mappedCellStyles, 'left') ||
-                leftNeighborHidden ||
-                (j === 0 && hiddenTableLeft)
-                  ? { ...DOCX_NONE_BORDER }
-                  : {
-                      ...(getBorderSide(mappedCellStyles, 'left') ??
-                        DOCX_DEFAULT_BORDER),
-                    },
-            });
+          // CSS collapsed border model: border-style: hidden on a neighbour always wins.
+          // If an adjacent cell declares hidden on its shared side, suppress our border there.
+          const adjacencyOverrides: Record<string, unknown> = {};
+          const rightNeighbor = getGridCellRawStyles(grid[i]?.[j + colSpan]);
+          if (rightNeighbor && isBorderSideHidden(rightNeighbor, 'Left')) {
+            adjacencyOverrides.right = NONE_BORDER;
+          }
+          const leftNeighbor =
+            j > 0 ? getGridCellRawStyles(grid[i]?.[j - 1]) : null;
+          if (leftNeighbor && isBorderSideHidden(leftNeighbor, 'Right')) {
+            adjacencyOverrides.left = NONE_BORDER;
+          }
+          const bottomNeighbor = getGridCellRawStyles(grid[i + rowSpan]?.[j]);
+          if (bottomNeighbor && isBorderSideHidden(bottomNeighbor, 'Top')) {
+            adjacencyOverrides.bottom = NONE_BORDER;
+          }
+          const topNeighbor =
+            i > 0 ? getGridCellRawStyles(grid[i - 1]?.[j]) : null;
+          if (topNeighbor && isBorderSideHidden(topNeighbor, 'Bottom')) {
+            adjacencyOverrides.top = NONE_BORDER;
+          }
+          if (Object.keys(adjacencyOverrides).length > 0) {
+            const existing = (docxCellStyles.borders ?? {}) as Record<
+              string,
+              unknown
+            >;
+            docxCellStyles.borders = { ...existing, ...adjacencyOverrides };
           }
 
-          cells.push(
-            new TableCell({
-              // TODO: make concurrent iterations
-              children: await cellContent,
-              columnSpan: colSpan > 1 ? colSpan : undefined,
-              verticalMerge: verticalMerge,
-              verticalAlign: VerticalAlign.CENTER,
-              ...stylesCol[j],
-              ...mappedCellStyles,
-            })
-          );
+          const newCell = new TableCell({
+            // TODO: make concurrent iterations
+            children: await cellContent,
+            columnSpan: colSpan > 1 ? colSpan : undefined,
+            verticalMerge: verticalMerge,
+            verticalAlign: VerticalAlign.CENTER,
+            ...stylesCol[j],
+            ...docxCellStyles,
+          });
+          cells.push(newCell);
           j += colSpan;
+
+          console.debug(
+            `[table-border] cell [${i},${j}], styles: ${JSON.stringify(newCell, null, 2)}`
+          );
         }
       }
       const rowElement = element.rows[i];
@@ -566,17 +353,34 @@ export class TableConverter implements IBlockConverter<DocumentElementType> {
 
     // Drop table if it has no rows
     if (tableRows.length === 0) {
+      // TODO: return captions?
       return [];
     }
 
-    const rawStyles = hasAnyHiddenCellBorders
-      ? ensureHiddenTableBorders(mappedTableStyles)
-      : mappedTableStyles;
+    const rawStyles = styleMapper.mapStyles(
+      { ...mergedStyles, ...element.styles },
+      element
+    );
+
+    // HTML default: tables have no visible borders unless explicitly styled.
+    // The docx library falls back to DEFAULT_BORDER (single, size 4) for every
+    // unspecified side in TableBorders — including insideH/V — so we must
+    // always supply an explicit all-none set and let CSS values override it.
+    const tableBorders = {
+      top: NONE_BORDER,
+      bottom: NONE_BORDER,
+      left: NONE_BORDER,
+      right: NONE_BORDER,
+      insideHorizontal: NONE_BORDER,
+      insideVertical: NONE_BORDER,
+      ...((rawStyles.borders as Record<string, unknown> | undefined) ?? {}),
+    };
 
     return [
       ...captions.filter((c) => c.side === 'top').map((c) => c.paragraph),
       new Table({
         ...rawStyles,
+        borders: tableBorders,
         rows: tableRows,
       }),
       ...captions.filter((c) => c.side === 'bottom').map((c) => c.paragraph),
