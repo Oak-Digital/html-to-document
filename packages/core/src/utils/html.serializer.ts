@@ -1,15 +1,16 @@
-import {
-  DocumentElement,
-  ImageElement,
-  TableElement,
-  TableRowElement,
-  TableCellElement,
-  HeadingElement,
-  ListElement,
-  IConverterDependencies,
-} from '../types';
 import type { IStylesheet } from '../styles/interfaces';
 import { createBaseStylesheet } from '../styles/stylesheet-seeding';
+import type {
+  DocumentElement,
+  HeadingElement,
+  IConverterDependencies,
+  ImageElement,
+  ListElement,
+  Styles,
+  TableCellElement,
+  TableElement,
+  TableRowElement,
+} from '../types';
 
 type HtmlSerializationStyles = IConverterDependencies['defaultStyles'];
 
@@ -97,6 +98,133 @@ const encodeText = (txt: string): string => {
 
 const encodeAttr = (val: string | number): string =>
   String(val).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+
+type BorderDirection = 'top' | 'right' | 'bottom' | 'left';
+
+const borderStyleTokens = [
+  'none',
+  'hidden',
+  'dotted',
+  'dashed',
+  'solid',
+  'double',
+  'groove',
+  'ridge',
+  'inset',
+  'outset',
+] as const;
+
+const extractBorderStyle = (
+  styles: Record<string, string | number>,
+  direction: BorderDirection
+): string | undefined => {
+  const directionalKey = `border${direction.charAt(0).toUpperCase()}${direction.slice(1)}Style`;
+  const directionalValue = styles[directionalKey];
+  if (typeof directionalValue === 'string') {
+    return directionalValue.trim().toLowerCase();
+  }
+
+  const borderStyleValue = styles.borderStyle;
+  if (typeof borderStyleValue === 'string') {
+    return borderStyleValue.trim().toLowerCase();
+  }
+
+  const shorthandBorderValue = styles.border;
+  if (typeof shorthandBorderValue !== 'string') {
+    return undefined;
+  }
+
+  const token = shorthandBorderValue
+    .split(/\s+/)
+    .map((part) => part.trim().toLowerCase())
+    .find((part): part is (typeof borderStyleTokens)[number] =>
+      (borderStyleTokens as readonly string[]).includes(part)
+    );
+
+  return token;
+};
+
+const isHiddenBorderStyle = (
+  styles: Record<string, string | number>,
+  direction: BorderDirection
+): boolean => {
+  const borderStyle = extractBorderStyle(styles, direction);
+  return borderStyle === 'hidden' || borderStyle === 'none';
+};
+
+const computeTablePerimeterOverrides = (
+  table: TableElement,
+  tableStyles: Record<string, string | number>
+): Map<TableCellElement, Styles> => {
+  const hideTop = isHiddenBorderStyle(tableStyles, 'top');
+  const hideRight = isHiddenBorderStyle(tableStyles, 'right');
+  const hideBottom = isHiddenBorderStyle(tableStyles, 'bottom');
+  const hideLeft = isHiddenBorderStyle(tableStyles, 'left');
+
+  if (!hideTop && !hideRight && !hideBottom && !hideLeft) {
+    return new Map();
+  }
+
+  let columnCount = 0;
+  for (const row of table.rows ?? []) {
+    let count = 0;
+    for (const cell of row.cells) {
+      count += cell.colspan ?? 1;
+    }
+    columnCount = Math.max(columnCount, count);
+  }
+
+  const rowCount = table.rows?.length ?? 0;
+  const occupied: boolean[][] = Array.from({ length: rowCount }, () =>
+    Array(Math.max(columnCount, 1)).fill(false)
+  );
+  const overrides = new Map<TableCellElement, Styles>();
+
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const row = table.rows[rowIndex];
+    if (!row) continue;
+
+    let columnIndex = 0;
+    for (const cell of row.cells) {
+      while (occupied[rowIndex]?.[columnIndex]) {
+        columnIndex++;
+      }
+
+      const colSpan = cell.colspan ?? 1;
+      const rowSpan = cell.rowspan ?? 1;
+
+      for (let r = rowIndex; r < Math.min(rowIndex + rowSpan, rowCount); r++) {
+        for (let c = columnIndex; c < columnIndex + colSpan; c++) {
+          if (occupied[r]) {
+            occupied[r]![c] = true;
+          }
+        }
+      }
+
+      const cellOverrides: Styles = {};
+      if (hideTop && rowIndex === 0) {
+        cellOverrides.borderTopStyle = 'hidden';
+      }
+      if (hideLeft && columnIndex === 0) {
+        cellOverrides.borderLeftStyle = 'hidden';
+      }
+      if (hideBottom && rowIndex + rowSpan >= rowCount) {
+        cellOverrides.borderBottomStyle = 'hidden';
+      }
+      if (hideRight && columnIndex + colSpan >= columnCount) {
+        cellOverrides.borderRightStyle = 'hidden';
+      }
+
+      if (Object.keys(cellOverrides).length > 0) {
+        overrides.set(cell, cellOverrides);
+      }
+
+      columnIndex += colSpan;
+    }
+  }
+
+  return overrides;
+};
 
 function filterStyles(tag: string, styles: Record<string, string | number>) {
   const filtered: Record<string, string | number> = {};
@@ -261,6 +389,10 @@ function elementToHtml(
 
   if (el.type === 'table') {
     const table = el as TableElement;
+    const perimeterOverrides = computeTablePerimeterOverrides(
+      table,
+      mergedStyles
+    );
     const theadRows: string[] = [];
     const tbodyRows: string[] = [];
 
@@ -274,7 +406,9 @@ function elementToHtml(
           return c.metadata?.tagName === 'th';
         });
       const cellsHtml = row.cells
-        .map((c) => cellToHtml(c, defaults, stylesheet))
+        .map((c) =>
+          cellToHtml(c, defaults, stylesheet, perimeterOverrides.get(c))
+        )
         .join('\n');
       const rowHtml = `<tr>\n${cellsHtml}\n</tr>`;
 
@@ -319,7 +453,8 @@ function elementToHtml(
 function cellToHtml(
   cell: TableCellElement,
   defaults: HtmlSerializationStyles = {},
-  stylesheet: IStylesheet = createBaseStylesheet()
+  stylesheet: IStylesheet = createBaseStylesheet(),
+  styleOverrides: Styles = {}
 ): string {
   const tag = cell.metadata?.tagName === 'th' ? 'th' : 'td';
   // basic attrs
@@ -331,6 +466,7 @@ function cellToHtml(
   const merged = {
     ...defaults[cell.type],
     ...stylesheet.getComputedStyles(cell, undefined),
+    ...styleOverrides,
   };
   if (Object.keys(merged).length) {
     const styleEntries = Object.entries(filterStyles(tag, merged)).map(
